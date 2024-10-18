@@ -1,10 +1,12 @@
-const { where } = require("sequelize");
 const { Patient } = require("../models");
+const { Op, where } = require('sequelize');
 
 module.exports = {
     getAllPatient: async (req, res) => {
         try {
+            const condition = search ? {name:{[Op.like]:`%${search}%`}}:{}
             const response = await Patient.findAll({
+                where:condition,
                 attributes: [
                     "name",
                     "gender",
@@ -32,14 +34,15 @@ module.exports = {
     },
 
 
-
     getPatientperPage: async (req, res) => {
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 20;
             const offset = (page - 1) * limit;
-
+            const search = req.query.name;
+            const condition = search ? {name:{[Op.like]:`%${search}%`}}:{}
             const response = await Patient.findAndCountAll({
+                where:condition,
                 attributes: [
                     "name",
                     "gender",
@@ -84,7 +87,6 @@ module.exports = {
     },
 
 
-
     addPatient: async (req, res) => {
         try {
             const data = req.body;
@@ -121,14 +123,14 @@ module.exports = {
                 email: data.email,
                 phoneNumber: data.phoneNumber,
                 martialStatus: data.martialStatus,
-            },{
-                where:{
-                    id:id
+            }, {
+                where: {
+                    id: id
                 }
             })
             res.status(200).json({
-                message:"Berhasil mengedit data pasien",
-                data:id
+                message: "Berhasil mengedit data pasien",
+                data: id
             })
         } catch (err) {
             res.status(500).json({
@@ -137,23 +139,23 @@ module.exports = {
         }
     },
 
-    
-    deletePatient : async (req,res) =>{
-        try{
-            const {id} = req.params
+
+    deletePatient: async (req, res) => {
+        try {
+            const { id } = req.params
             await Patient.destroy({
-                where:{
-                    id:id
+                where: {
+                    id: id
                 }
             })
             res.status(200).json({
-                message:"Berhasil menghapus data pasien"
+                message: "Berhasil menghapus data pasien"
             })
-        }catch(err){
+        } catch (err) {
             res.status(500).json({
                 message: err.message
             });
         }
     }
-    
+
 };
