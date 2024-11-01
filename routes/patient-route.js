@@ -1,7 +1,7 @@
 const express = require("express");
 const route = express.Router()
 
-const { getAllPatient, addPatient, deletePatient, editPatient } = require('../controllers/patient-controllers')
+const { getAllPatient, addPatient, deletePatient, editPatient, getPatientperPage } = require('../controllers/patient-controllers')
 
 route.get("/",getAllPatient)
 route.post("/",addPatient)

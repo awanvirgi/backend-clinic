@@ -1,12 +1,58 @@
 const { Patient } = require("../models");
-const { Op, where } = require('sequelize');
+const { Op } = require('sequelize');
 
 module.exports = {
-    getAllPatient: async (req, res) => {
+    getAllPatient: async (req, res, next) => {
         try {
-            const condition = search ? {name:{[Op.like]:`%${search}%`}}:{}
+            const search = req.query.name;
+            const condition = search ? { name: { [Op.like]: `%${search}%` } } : {}
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 20;
+
+            if (page && limit) {
+                const offset = (page - 1) * limit;
+                const response = await Patient.findAndCountAll({
+                    where: condition,
+                    attributes: [
+                        "name",
+                        "gender",
+                        "address",
+                        "dateOfBirth",
+                        "email",
+                        "phoneNumber",
+                        "martialStatus",
+                    ],
+                    limit: limit,
+                    offset: offset,
+                });
+
+                if (response.rows.length === 0) {
+                    return res.status(404).json({ message: "Pasien tidak ditemukan" });
+                }
+
+                //pagination data
+                const totalPages = Math.ceil(response.count / limit);
+                const pages = Array.from({ length: totalPages }, (v, i) => i + 1);
+                const nextPage = page < totalPages ? page + 1 : null;
+                const prevPage = page > 1 ? page - 1 : null;
+
+                return res.status(200).json({
+                    message: "Berhasil Menampilkan Data per Page",
+                    data: response.rows,
+                    pagination: {
+                        totalItems: response.count,
+                        totalPages: totalPages,
+                        currentPage: page,
+                        itemsPerPage: limit,
+                        nextPage: nextPage,
+                        prevPage: prevPage,
+                        pages: pages,
+                    },
+                });
+
+            }
             const response = await Patient.findAll({
-                where:condition,
+                where: condition,
                 attributes: [
                     "name",
                     "gender",
@@ -22,72 +68,17 @@ module.exports = {
                 return res.status(404).json({ message: "Pasien tidak ditemukan" });
             }
 
-            res.status(200).json({
+            return res.status(200).json({
                 message: "Berhasil Menampilkan Data",
                 data: response,
             });
         } catch (err) {
-            res.status(500).json({
-                message: err.message,
-            });
+            next(err)
         }
     },
 
 
-    getPatientperPage: async (req, res) => {
-        try {
-            const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 20;
-            const offset = (page - 1) * limit;
-            const search = req.query.name;
-            const condition = search ? {name:{[Op.like]:`%${search}%`}}:{}
-            const response = await Patient.findAndCountAll({
-                where:condition,
-                attributes: [
-                    "name",
-                    "gender",
-                    "address",
-                    "dateOfBirth",
-                    "email",
-                    "phoneNumber",
-                    "martialStatus",
-                ],
-                limit: limit,
-                offset: offset,
-            });
-
-            if (response.rows.length === 0) {
-                return res.status(404).json({ message: "Pasien tidak ditemukan" });
-            }
-
-            //pagination data
-            const totalPages = Math.ceil(response.count / limit);
-            const pages = Array.from({ length: totalPages }, (v, i) => i + 1);
-            const nextPage = page < totalPages ? page + 1 : null;
-            const prevPage = page > 1 ? page - 1 : null;
-
-            res.status(200).json({
-                message: "Berhasil Menampilkan Data per Page",
-                data: response.rows,
-                pagination: {
-                    totalItems: response.count,
-                    totalPages: totalPages,
-                    currentPage: page,
-                    itemsPerPage: limit,
-                    nextPage: nextPage,
-                    prevPage: prevPage,
-                    pages: pages,
-                },
-            });
-        } catch (err) {
-            res.status(500).json({
-                message: err.message,
-            });
-        }
-    },
-
-
-    addPatient: async (req, res) => {
+    addPatient: async (req, res, next) => {
         try {
             const data = req.body;
             let patient_data = await Patient.create({
@@ -104,9 +95,7 @@ module.exports = {
                 data: patient_data,
             });
         } catch (err) {
-            res.status(500).json({
-                message: err.message,
-            });
+            next(err)
         }
     },
 
@@ -133,14 +122,12 @@ module.exports = {
                 data: id
             })
         } catch (err) {
-            res.status(500).json({
-                message: err.message
-            });
+            next(err)
         }
     },
 
 
-    deletePatient: async (req, res) => {
+    deletePatient: async (req, res, next) => {
         try {
             const { id } = req.params
             await Patient.destroy({
@@ -152,9 +139,7 @@ module.exports = {
                 message: "Berhasil menghapus data pasien"
             })
         } catch (err) {
-            res.status(500).json({
-                message: err.message
-            });
+            next(err)
         }
     }
 
