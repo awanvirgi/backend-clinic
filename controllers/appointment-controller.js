@@ -1,7 +1,7 @@
 const { response } = require("express");
 const { Appointment, Patient, Midwafe } = require("../models")
 
-const { Op } = require('sequelize')
+const { Op, where } = require('sequelize')
 const moment = require('moment')
 const tokengambler = (length = 5) => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -40,6 +40,7 @@ module.exports = {
                         "token",
                         "services",
                         "reason",
+                        "status"
                     ],
                     limit: limit,
                     offset: offset,
@@ -84,6 +85,7 @@ module.exports = {
                     "token",
                     "services",
                     "reason",
+                    "status"
                 ],
             });
 
@@ -120,13 +122,33 @@ module.exports = {
                     date: data.date,
                     token: tokengambler,
                     services: data.services,
-                    reason: data.reason
+                    reason: data.reason,
+                    status: "Belum"
                 })
                 res.status(201).json({
                     message: "Berhasil menambahkan Appointment",
                     token: Appointment_data.token,
                 });
             }
+        } catch (err) {
+            next(err)
+        }
+    },
+    toggleAppointment: async (req, res, next) => {
+        try {
+            const { id } = req.params;
+            const { status } = req.body;
+            await Appointment.update({
+                status: status
+            }, {
+                where: {
+                    id: id
+                }
+            })
+            res.status(200).json({
+                message: "Berhasil mengedit data Bidan",
+                data: id
+            })
         } catch (err) {
             next(err)
         }
