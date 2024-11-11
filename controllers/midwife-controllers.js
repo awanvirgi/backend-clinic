@@ -73,6 +73,22 @@ module.exports = {
             next(err);
         }
     },
+
+    getMidWafeById : async(req,res,next)=>{
+        try{
+            const {id} = req.params
+            const Midwafe_data = await Midwafe.findByPk(id)
+            if(Midwafe_data == NULL){
+                return res.status(404).json({ message: "Bidan tidak ditemukan" });
+            }
+            return res.status(200).json({
+                message:"Berhasil Menampilkan Data Bidan",
+                data:Midwafe_data
+            })
+        }catch(err){
+            next(err)
+        }
+    },
     
 
 

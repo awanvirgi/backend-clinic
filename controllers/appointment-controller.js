@@ -45,7 +45,7 @@ module.exports = {
                 });
 
                 if (response.rows.length === 0 || !response) {
-                    return res.status(404).json({ message: "Bidan tidak ditemukan" });
+                    return res.status(404).json({ message: "Janji Temu tidak ditemukan" });
                 }
 
                 // Pagination data
@@ -88,13 +88,50 @@ module.exports = {
             });
 
             if (response.length === 0) {
-                return res.status(404).json({ message: "Bidan tidak ditemukan" });
+                return res.status(404).json({ message: "Janji tidak ditemukan" });
             }
 
             return res.status(200).json({
                 message: "Berhasil Menampilkan Semua Data",
                 data: response,
             });
+        } catch (err) {
+            next(err)
+        }
+    },
+    getAppointmentById: async (req, res, next) => {
+        try {
+            const { id } = req.params
+            const Appointment_data = await Appointment.findOne({
+                where: {
+                    id: id
+                },
+                include: [
+                    {
+                        model: Patient,
+                        attributes: ['id', 'name']
+                    },
+                    {
+                        model: Midwafe,
+                        attributes: ['id', 'name']
+                    }
+                ],
+                attributes: [
+                    "price",
+                    "date",
+                    "token",
+                    "services",
+                    "reason",
+                    "status"
+                ],
+            })
+            if (Appointment_data == null) {
+                return res.status(404).json({ message: "Janji Temu tidak ditemukan" });
+            }
+            res.status(200).json({
+                message: "Berhasil menemukan Janji temu data",
+                data: Appointment_data
+            })
         } catch (err) {
             next(err)
         }
@@ -136,22 +173,22 @@ module.exports = {
         try {
             const { id } = req.params;
             const { status, price, date, services, reason } = req.body;
-    
+
             const updateData = {};
             if (status !== undefined) updateData.status = status;
             if (price !== undefined) updateData.price = price;
             if (date !== undefined) updateData.date = date;
             if (services !== undefined) updateData.services = services;
             if (reason !== undefined) updateData.reason = reason;
-    
+
             await Appointment.update(updateData, {
                 where: { id: id }
             });
-    
-            const message = status !== undefined 
-                ? "Berhasil merubah Status Appointment" 
+
+            const message = status !== undefined
+                ? "Berhasil merubah Status Appointment"
                 : "Berhasil Edit Janji Temu";
-    
+
             res.status(200).json({
                 message: message,
                 data: id
@@ -160,8 +197,8 @@ module.exports = {
             next(err);
         }
     },
-    deleteAppointment : async (req,res,next) =>{
-        try{
+    deleteAppointment: async (req, res, next) => {
+        try {
             const { id } = req.params
             await Appointment.destroy({
                 where: {
@@ -171,7 +208,7 @@ module.exports = {
             res.status(200).json({
                 message: "Berhasil menghapus data Janji Temu"
             })
-        }catch(err){
+        } catch (err) {
             next(err)
         }
     }

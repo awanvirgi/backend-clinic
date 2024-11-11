@@ -77,6 +77,22 @@ module.exports = {
         }
     },
 
+    getPatientById : async(req,res,next)=>{
+        try{
+            const {id} = req.params
+            const patient_data = await Patient.findByPk(id)
+            if(patient_data == NULL){
+                return res.status(404).json({ message: "Pasien tidak ditemukan" });
+            }
+            return res.status(200).json({
+                message:"Berhasil Menampilkan Data Pasien",
+                data:patient_data
+            })
+        }catch(err){
+            next(err)
+        }
+    },
+
 
     addPatient: async (req, res, next) => {
         try {
