@@ -1,8 +1,6 @@
-const { response } = require("express");
 const { Appointment, Patient, Midwafe } = require("../models")
 
-const { Op, where } = require('sequelize')
-const moment = require('moment')
+const { Op } = require('sequelize')
 const tokengambler = (length = 5) => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let token = '';
@@ -134,22 +132,46 @@ module.exports = {
             next(err)
         }
     },
-    toggleAppointment: async (req, res, next) => {
+    updateAppointment: async (req, res, next) => {
         try {
             const { id } = req.params;
-            const { status } = req.body;
-            await Appointment.update({
-                status: status
-            }, {
+            const { status, price, date, services, reason } = req.body;
+    
+            const updateData = {};
+            if (status !== undefined) updateData.status = status;
+            if (price !== undefined) updateData.price = price;
+            if (date !== undefined) updateData.date = date;
+            if (services !== undefined) updateData.services = services;
+            if (reason !== undefined) updateData.reason = reason;
+    
+            await Appointment.update(updateData, {
+                where: { id: id }
+            });
+    
+            const message = status !== undefined 
+                ? "Berhasil merubah Status Appointment" 
+                : "Berhasil Edit Janji Temu";
+    
+            res.status(200).json({
+                message: message,
+                data: id
+            });
+        } catch (err) {
+            next(err);
+        }
+    },
+    deleteAppointment : async (req,res,next) =>{
+        try{
+            const { id } = req.params
+            await Appointment.destroy({
                 where: {
                     id: id
                 }
             })
             res.status(200).json({
-                message: "Berhasil mengedit data Bidan",
-                data: id
+                message: "Berhasil menghapus data Janji Temu"
             })
-        } catch (err) {
+        }catch(err){
             next(err)
         }
     }
