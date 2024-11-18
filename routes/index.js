@@ -11,8 +11,8 @@ route.get("/", (req, res) => {
     })
 })
 
-route.use("/patient",patientRoute)
-route.use("/midwife",midwiferoute)
-route.use("/appointment",appointmentRoute)
+route.use("/api/patients",patientRoute)
+route.use("/api/midwifes",midwiferoute)
+route.use("/api/appointments",appointmentRoute)
 
 module.exports = route

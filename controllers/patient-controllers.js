@@ -6,8 +6,8 @@ module.exports = {
         try {
             const search = req.query.name;
             const condition = search ? { name: { [Op.like]: `%${search}%` } } : {}
-            const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 20;
+            const page = parseInt(req.query.page) || null;
+            const limit = parseInt(req.query.limit) || null;
 
             if (page && limit) {
                 const offset = (page - 1) * limit;
