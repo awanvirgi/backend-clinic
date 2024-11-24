@@ -1,38 +1,36 @@
-const { Patient } = require("../models");
-const { Op } = require('sequelize');
+const { Midwafe } = require("../models")
 
 module.exports = {
-    getAllPatient: async (req, res, next) => {
+    getAllMidwafe: async (req, res, next) => {
         try {
             const search = req.query.name;
-            const condition = search ? { name: { [Op.like]: `%${search}%` } } : {}
             const page = parseInt(req.query.page) || null;
             const limit = parseInt(req.query.limit) || null;
+            const condition = search ? { name: { [Op.like]: `%${search}%` } } : {};
 
+            // Jika ada page dan limit, lakukan paginasi
             if (page && limit) {
                 const offset = (page - 1) * limit;
-                const response = await Patient.findAndCountAll({
+                const response = await Midwafe.findAndCountAll({
                     where: condition,
                     attributes: [
                         "name",
+                        "strId",
                         "gender",
-                        "address",
-                        "dateOfBirth",
-                        "email",
+                        "specialist",
                         "phoneNumber",
-                        "martialStatus",
+                        "dateOfBirth",
                     ],
                     limit: limit,
                     offset: offset,
                 });
 
                 if (response.rows.length === 0) {
-                    return res.status(404).json({ message: "Pasien tidak ditemukan" });
+                    return res.status(404).json({ message: "Bidan tidak ditemukan" });
                 }
 
-                //pagination data
+                // Pagination data
                 const totalPages = Math.ceil(response.count / limit);
-                const pages = Array.from({ length: totalPages }, (v, i) => i + 1);
                 const nextPage = page < totalPages ? page + 1 : null;
                 const prevPage = page > 1 ? page - 1 : null;
 
@@ -46,95 +44,93 @@ module.exports = {
                         itemsPerPage: limit,
                         nextPage: nextPage,
                         prevPage: prevPage,
-                        pages: pages,
                     },
                 });
+            } else {
+                // Jika tidak ada page dan limit, ambil semua data
+                const response = await Midwafe.findAll({
+                    where: condition,
+                    attributes: [
+                        "name",
+                        "strId",
+                        "gender",
+                        "specialist",
+                        "phoneNumber",
+                        "dateOfBirth",
+                    ],
+                });
 
+                if (response.length === 0) {
+                    return res.status(404).json({ message: "Bidan tidak ditemukan" });
+                }
+
+                return res.status(200).json({
+                    message: "Berhasil Menampilkan Semua Data",
+                    data: response,
+                });
             }
-            const response = await Patient.findAll({
-                where: condition,
-                attributes: [
-                    "name",
-                    "gender",
-                    "address",
-                    "dateOfBirth",
-                    "email",
-                    "phoneNumber",
-                    "martialStatus",
-                ],
-            });
-
-            if (response.length === null) {
-                return res.status(404).json({ message: "Pasien tidak ditemukan" });
-            }
-
-            return res.status(200).json({
-                message: "Berhasil Menampilkan Data",
-                data: response,
-            });
         } catch (err) {
-            next(err)
+            next(err);
         }
     },
 
-    getPatientById : async(req,res,next)=>{
+    getMidWafeById : async(req,res,next)=>{
         try{
             const {id} = req.params
-            const patient_data = await Patient.findByPk(id)
-            if(patient_data == NULL){
-                return res.status(404).json({ message: "Pasien tidak ditemukan" });
+            const Midwafe_data = await Midwafe.findByPk(id)
+            if(Midwafe_data == NULL){
+                return res.status(404).json({ message: "Bidan tidak ditemukan" });
             }
             return res.status(200).json({
-                message:"Berhasil Menampilkan Data Pasien",
-                data:patient_data
+                message:"Berhasil Menampilkan Data Bidan",
+                data:Midwafe_data
             })
         }catch(err){
             next(err)
         }
     },
+    
 
 
-    addPatient: async (req, res, next) => {
+
+
+    addMidwafe: async (req, res, next) => {
         try {
             const data = req.body;
-            let patient_data = await Patient.create({
+            let Midwafe_data = await Midwafe.create({
                 name: data.name,
                 gender: data.gender,
-                address: data.address,
-                dateOfBirth: data.dateOfBirth,
-                email: data.email,
+                strId: data.strId,
+                specialist: data.specialist,
                 phoneNumber: data.phoneNumber,
-                martialStatus: data.martialStatus,
+                dateOfBirth: data.dateOfBirth,
             });
             res.status(201).json({
-                message: "Berhasil menambahkan Pasien",
-                data: patient_data,
+                message: "Berhasil menambahkan Data Bidan",
+                data: Midwafe_data,
             });
         } catch (err) {
             next(err)
         }
     },
-
-
-    editPatient: async (req, res) => {
+    editMidwafe: async (req, res) => {
         try {
             const { id } = req.params;
             const data = req.body;
-            await Patient.update({
+            await Midwafe.update({
                 name: data.name,
                 gender: data.gender,
-                address: data.address,
-                dateOfBirth: data.dateOfBirth,
-                email: data.email,
+                strId: data.strId,
+                specialist: data.specialist,
                 phoneNumber: data.phoneNumber,
-                martialStatus: data.martialStatus,
+                dateOfBirth: data.dateOfBirth,
             }, {
                 where: {
                     id: id
                 }
             })
             res.status(200).json({
-                message: "Berhasil mengedit data pasien",
+                message: "Berhasil mengedit data Bidan",
                 data: id
             })
         } catch (err) {
@@ -142,21 +138,19 @@ module.exports = {
         }
     },
 
-
-    deletePatient: async (req, res, next) => {
+    deleteMidwafe: async (req, res, next) => {
         try {
             const { id } = req.params
-            await Patient.destroy({
+            await Midwafe.destroy({
                 where: {
                     id: id
                 }
             })
             res.status(200).json({
-                message: "Berhasil menghapus data pasien"
+                message: "Berhasil menghapus data Bidan"
             })
         } catch (err) {
             next(err)
         }
     }
-
-};
+}
