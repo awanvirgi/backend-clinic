@@ -1,9 +1,13 @@
+const moment = require("moment");
+require('moment/locale/id');
+moment.locale('id')
+
 const { Appointment, Patient, Midwafe } = require("../models")
 
 const { Op } = require('sequelize')
 const tokengambler = (length = 5) => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let token = '';
+    let token = "";
     for (let i = 0; i < length; i++) {
         const randomIndex = Math.floor(Math.random() * characters.length);
         token += characters[randomIndex];
@@ -33,12 +37,16 @@ module.exports = {
                         }
                     ],
                     attributes: [
+                        "id",
                         "price",
                         "date",
                         "token",
                         "services",
                         "reason",
-                        "status"
+                        "status",
+                        "visit",
+                        "payment",
+                        "aname",
                     ],
                     limit: limit,
                     offset: offset,
@@ -78,12 +86,16 @@ module.exports = {
                     }
                 ],
                 attributes: [
+                    "id",
                     "price",
                     "date",
                     "token",
                     "services",
                     "reason",
-                    "status"
+                    "status",
+                    "visit",
+                    "payment",
+                    "aname",
                 ],
             });
 
@@ -101,45 +113,63 @@ module.exports = {
     },
     getAppointmentById: async (req, res, next) => {
         try {
-            const { id } = req.params
-            const Appointment_data = await Appointment.findOne({
-                where: {
-                    id: id
-                },
+            const { id } = req.params; // Ambil ID dari parameter URL
+
+            // Query untuk menemukan janji temu berdasarkan ID
+            const appointment = await Appointment.findOne({
+                where: { id }, // Kondisi berdasarkan ID
                 include: [
                     {
                         model: Patient,
-                        attributes: ['id', 'name']
+                        attributes: ['id', 'name'], // Atribut yang diambil dari tabel Patient
                     },
                     {
                         model: Midwafe,
-                        attributes: ['id', 'name']
-                    }
+                        attributes: ['id', 'name'], // Atribut yang diambil dari tabel Midwafe
+                    },
                 ],
                 attributes: [
+                    "id",
                     "price",
                     "date",
                     "token",
                     "services",
                     "reason",
-                    "status"
-                ],
-            })
-            if (Appointment_data == null) {
-                return res.status(404).json({ message: "Janji Temu tidak ditemukan" });
+                    "status",
+                    "visit",
+                    "payment",
+                    "aname",
+                ], // Atribut yang diambil dari tabel Appointment
+            });
+
+            // Jika janji temu tidak ditemukan
+            if (!appointment) {
+                return res.status(404).json({
+                    message: "Janji temu tidak ditemukan",
+                });
             }
-            res.status(200).json({
-                message: "Berhasil menemukan Janji temu data",
-                data: Appointment_data
-            })
+
+            // Jika janji temu ditemukan, kembalikan data
+            return res.status(200).json({
+                message: "Berhasil Menampilkan Detail Janji Temu",
+                data: appointment,
+            });
         } catch (err) {
-            next(err)
+            next(err); // Handle error
         }
     },
+
     addAppointment: async (req, res, next) => {
         try {
             const data = req.body;
+            console.log(data);
             const { patient } = data
+            const formattedDate = moment(data.date).local().format('YYYY-MM-DD HH:mm:ss');
+            if (!moment(formattedDate, 'YYYY-MM-DD HH:mm:ss', true).isValid()) {
+                return res.status(400).json({ error: 'Invalid date format' });
+            }
+            const dataToken = tokengambler()
+            console.log(dataToken)
             let patient_data = await Patient.create({
                 name: patient.name,
                 gender: patient.gender,
@@ -154,11 +184,14 @@ module.exports = {
                     patientId: patient_data.id,
                     doctorId: data.midwife_id,
                     price: data.price,
-                    date: data.date,
-                    token: tokengambler,
+                    date: formattedDate,
+                    token: dataToken,
                     services: data.services,
                     reason: data.reason,
-                    status: "Belum"
+                    status: "Belum",
+                    payment: data.payment,
+                    visit: data.visit,
+                    aname: data.aname
                 })
                 res.status(201).json({
                     message: "Berhasil menambahkan Appointment",
@@ -166,13 +199,14 @@ module.exports = {
                 });
             }
         } catch (err) {
-            next(err)
+            console.error("Terjadi kesalahan:", err.message);
+            res.status(500).json({ error: err.message });
         }
     },
     updateAppointment: async (req, res, next) => {
         try {
             const { id } = req.params;
-            const { status, price, date, services, reason } = req.body;
+            const { status, price, date, services, reason, payment, visit, aname } = req.body;
 
             const updateData = {};
             if (status !== undefined) updateData.status = status;
@@ -180,6 +214,9 @@ module.exports = {
             if (date !== undefined) updateData.date = date;
             if (services !== undefined) updateData.services = services;
             if (reason !== undefined) updateData.reason = reason;
+            if (payment !== undefined) updateData.payment = payment;
+            if (visit !== undefined) updateData.visit = visit;
+            if (aname !== undefined) updateData.aname = aname;
 
             await Appointment.update(updateData, {
                 where: { id: id }

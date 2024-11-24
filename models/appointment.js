@@ -25,7 +25,22 @@ module.exports = (sequelize, DataTypes) => {
         date: DataTypes.DATE,
         token: DataTypes.TEXT,
         services: DataTypes.TEXT,
-        reason: DataTypes.TEXT
+        reason: DataTypes.TEXT,
+        status: {
+            type:DataTypes.ENUM,
+            values:["Belum", "Proses", "Selesai"]
+        },
+        payment: {
+            type:DataTypes.ENUM,
+            values:["qris", "cash"]
+        },
+        visit: {
+            type:DataTypes.ENUM,
+            values:["online", "home", "klinik"]
+        },
+        aname: {
+            type:DataTypes.TEXT,
+        }
     }, {
         sequelize,
         modelName: 'Appointment',
